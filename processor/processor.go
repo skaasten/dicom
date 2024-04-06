@@ -5,26 +5,41 @@ import (
 	"fmt"
 
 	"github.com/suyashkumar/dicom"
+	"github.com/suyashkumar/dicom/pkg/tag"
 )
 
-type Tag uint16
+type Tag struct {
+	Group   uint16 `json:"group"`
+	Element uint16 `json:"element"`
+}
 
-// Returns the specified tags for a given dicom
-func Tags(contents []byte, tags []Tag) ([]Tag, error) {
+type HeaderAttribute struct {
+	Tag   Tag    `json:"tag"`
+	Value string `json:"value"`
+}
+
+// HeaderAttrs Returns the specified header attributs for a given dicom
+func HeaderAttrs(contents []byte, tags []Tag) ([]HeaderAttribute, error) {
 	reader := bytes.NewReader(contents)
-	dicomFile, err := dicom.ParseUntilEOF(reader, nil)
+	data, err := dicom.ParseUntilEOF(reader, nil)
 	if err != nil {
 		fmt.Println("Error parsing DICOM file:", err)
-		return []Tag{}, err
+		return []HeaderAttribute{}, err
 	}
+	//fmt.Println(data.Elements)
 
-	// Print some information about the DICOM file
-	fmt.Println("DICOM file details:", dicomFile.Elements)
-
-	// You can access DICOM tags by their names or numbers
-	// For example, to get the Patient's Name:
-	//patientName := dicomFile.Elements[0x00100010].Value().(string)
-	//fmt.Println("Patient's Name:", patientName)
-
-	return []Tag{}, nil
+	attrs := []HeaderAttribute{}
+	for _, t := range tags {
+		dicomTag := tag.Tag{t.Group, t.Element}
+		elem, err := data.FindElementByTag(dicomTag)
+		if err != nil {
+			return attrs, err
+		}
+		attr := HeaderAttribute{
+			Tag:   t,
+			Value: elem.Value.String(),
+		}
+		attrs = append(attrs, attr)
+	}
+	return attrs, nil
 }
