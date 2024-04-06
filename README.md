@@ -21,15 +21,18 @@ GET /dicom/{id} -H accept-type=image/png
 ```
 go run cmd/main.go 
 ```
-## http
-
-handlers
+## handlers
 
 contains:
-new(repository)
-uploadHandler())
+new(repository, processor)
+uploadHandler(file))
+getTags(id, tags)
+getPng(id)
 
-getHandler()
+## processor
+new()
+Tags(file, tags) 
+AsPng(file)
 
 ## repository
 
