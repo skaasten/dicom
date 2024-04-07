@@ -3,7 +3,7 @@
 # API
 
 POST /dicom content-type:multipart/form-data
-=> 201 url resource
+=> 201 url resource id
 
 GET /dicom/{id}?tags[]=%280008%2C0025%29
 
@@ -26,13 +26,19 @@ go run cmd/main.go
 contains:
 new(repository, processor)
 uploadHandler(file))
-getTags(id, tags)
+getTagsHandler(id, tags)
+getPngHandler(id)
+
+```
+file := repo.get(id)
+return processor.HeaderAttrs(file, tags)
+```
+
 getPng(id)
 
 ## processor
-new()
-Tags(file, tags) 
-AsPng(file)
+HeaderAttrs(file, tags) -> []HeaderAttribute
+AsPng(file)-> [][]byte
 
 ## repository
 
