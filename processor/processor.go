@@ -3,8 +3,10 @@ package processor
 import (
 	"bytes"
 	"fmt"
+	"image/png"
 
 	"github.com/suyashkumar/dicom"
+	"github.com/suyashkumar/dicom/pkg/frame"
 	"github.com/suyashkumar/dicom/pkg/tag"
 )
 
@@ -26,7 +28,6 @@ func HeaderAttrs(contents []byte, tags []Tag) ([]HeaderAttribute, error) {
 		fmt.Println("Error parsing DICOM file:", err)
 		return []HeaderAttribute{}, err
 	}
-	//fmt.Println(data.Elements)
 
 	attrs := []HeaderAttribute{}
 	for _, t := range tags {
@@ -42,4 +43,51 @@ func HeaderAttrs(contents []byte, tags []Tag) ([]HeaderAttribute, error) {
 		attrs = append(attrs, attr)
 	}
 	return attrs, nil
+}
+
+func AsPng(contents []byte) ([][]byte, error) {
+	reader := bytes.NewReader(contents)
+	dataset, err := dicom.ParseUntilEOF(reader, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse dicom data: %w", err)
+	}
+	images := [][]byte{}
+	for _, elem := range dataset.Elements {
+		fmt.Println("elem", elem)
+		if elem.Tag == tag.PixelData {
+			fmt.Println("found image")
+			tagImages, err := writePixelDataElement(elem, "")
+			if err != nil {
+				return images, fmt.Errorf("failed to convert image: %w", err)
+			}
+			images = append(images, tagImages...)
+		}
+	}
+	return images, nil
+}
+
+func writePixelDataElement(e *dicom.Element, suffix string) ([][]byte, error) {
+	imageInfo := e.Value.GetValue().(dicom.PixelDataInfo)
+	images := [][]byte{}
+	for _, f := range imageInfo.Frames {
+		image, err := generateImage(f)
+		if err != nil {
+			return images, fmt.Errorf("failed to generate image: %w", err)
+		}
+		images = append(images, image)
+	}
+	return images, nil
+}
+
+func generateImage(fr *frame.Frame) ([]byte, error) {
+	i, err := fr.GetImage()
+	var buf bytes.Buffer
+	if err != nil {
+		return nil, fmt.Errorf("failed to get image: %w", err)
+	}
+	err = png.Encode(&buf, i)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode png: %w", err)
+	}
+	return buf.Bytes(), err
 }

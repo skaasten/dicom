@@ -1,9 +1,12 @@
 package processor_test
 
 import (
+	"fmt"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/skaasten/dicom/processor"
 )
@@ -77,4 +80,47 @@ func TestHeaderAttrs(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAsPng(t *testing.T) {
+	filePath := "../testdata/5.dcm"
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("error opening dicom file: %v", err)
+	}
+
+	images, err := processor.AsPng(content)
+	if err != nil {
+		t.Errorf("error calling as png: %v", err)
+	}
+
+	expectedLength := 2
+	if len(images) != 2 {
+		t.Errorf("expected length %d, got %d", expectedLength, len(images))
+	}
+
+	tmpDir := os.TempDir()
+	for _, img := range images {
+		err = writeTempFile(tmpDir, img)
+		if err != nil {
+			t.Errorf("error writing temp file: %v", err)
+		}
+	}
+}
+
+func writeTempFile(dir string, data []byte) error {
+	randomName := fmt.Sprintf("output_%d.png", time.Now().UnixNano())
+	// Create the temporary file
+	tmpFile, err := ioutil.TempFile(dir, randomName)
+	if err != nil {
+		return err
+	}
+	defer tmpFile.Close()
+
+	_, err = tmpFile.Write(data)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Temporary file", tmpFile.Name(), "has been written successfully.")
+	return nil
 }
