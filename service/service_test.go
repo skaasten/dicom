@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/skaasten/dicom/processor"
 	"github.com/skaasten/dicom/repository"
 	"github.com/skaasten/dicom/service"
 )
@@ -30,5 +31,16 @@ func TestAddAndGetImage(t *testing.T) {
 	}
 	if !reflect.DeepEqual(retrieved, content) {
 		t.Errorf("file contents should match original")
+	}
+
+	attrs, err := srv.HeaderAttributes(key, []processor.Tag{
+		processor.Tag{0x0010, 0x1010},
+	})
+	if err != nil {
+		t.Errorf("error getting attrs: %v", err)
+	}
+	expectedValue := "[052Y]"
+	if attrs[0].Value != expectedValue {
+		t.Errorf("expected: %s, got: %s", expectedValue, attrs[0].Value)
 	}
 }
