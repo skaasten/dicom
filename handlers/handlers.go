@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/skaasten/dicom/service"
 )
 
@@ -66,7 +67,20 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) GetByIdHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if id == "" {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		http.Error(w, "invalid URL", http.StatusBadRequest)
+		return
 	}
 	fmt.Fprintf(w, "UUID: %s\n", id)
+	key, err := uuid.Parse(id)
+	if err != nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	_, ok := h.dicom.Get(key)
+	if !ok {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	fmt.Println("success")
+	w.WriteHeader(http.StatusOK)
 }
