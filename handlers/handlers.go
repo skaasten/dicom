@@ -87,6 +87,13 @@ func (h *Handlers) GetByIdHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
+
+	contentType := r.Header.Get("Accept-Type")
+	if contentType == "image/png" {
+		h.getPngImages(key, w)
+		return
+	}
+
 	tags := []processor.Tag{}
 	queryParams := r.URL.Query()
 	for _, qt := range queryParams["tag"] {
@@ -99,7 +106,7 @@ func (h *Handlers) GetByIdHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	attrs, err := h.dicom.HeaderAttributes(key, tags)
 	if err != nil {
-		fmt.Println("error getting attrs: %s", err)
+		fmt.Println("error getting attrs: %w", err)
 		http.Error(w, "error getting attrs", http.StatusInternalServerError)
 		return
 	}
@@ -111,6 +118,7 @@ func (h *Handlers) GetByIdHandler(w http.ResponseWriter, r *http.Request) {
 	responseJSON, err := json.Marshal(response)
 	if err != nil {
 		http.Error(w, "error encoding JSON: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -132,4 +140,22 @@ func paramToTag(s string) (*processor.Tag, error) {
 		return nil, fmt.Errorf("bad tag format: %w", err)
 	}
 	return &processor.Tag{uint16(group), uint16(element)}, nil
+}
+
+func (h *Handlers) getPngImages(key uuid.UUID, w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "image/png")
+	images, err := h.dicom.AsPng(key)
+	if err != nil {
+		fmt.Println("error getting images: %w", err)
+		http.Error(w, "error getting images", http.StatusInternalServerError)
+		return
+	}
+	for _, img := range images {
+		_, err = w.Write(img)
+		if err != nil {
+			fmt.Println("Error encoding image:", err)
+			http.Error(w, "error encoding image", http.StatusInternalServerError)
+			return
+		}
+	}
 }

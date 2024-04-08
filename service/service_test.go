@@ -43,4 +43,9 @@ func TestAddAndGetImage(t *testing.T) {
 	if attrs[0].Value != expectedValue {
 		t.Errorf("expected: %s, got: %s", expectedValue, attrs[0].Value)
 	}
+
+	_, err = srv.AsPng(key)
+	if err != nil {
+		t.Errorf("expected as png to succeed")
+	}
 }

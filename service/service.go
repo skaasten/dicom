@@ -33,3 +33,15 @@ func (d *Dicom) HeaderAttributes(key uuid.UUID, tags []processor.Tag) ([]process
 	}
 	return attrs, nil
 }
+
+func (d *Dicom) AsPng(key uuid.UUID) ([][]byte, error) {
+	file, ok := d.Get(key)
+	if !ok {
+		return nil, fmt.Errorf("failed to get file")
+	}
+	images, err := processor.AsPng(file)
+	if err != nil {
+		return nil, fmt.Errorf("error getting images: %w", err)
+	}
+	return images, nil
+}
