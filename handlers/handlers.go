@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
+	"github.com/skaasten/dicom/processor"
 	"github.com/skaasten/dicom/service"
 )
 
@@ -81,6 +84,40 @@ func (h *Handlers) GetByIdHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
-	fmt.Println("success")
+	tags := []processor.Tag{}
+	queryParams := r.URL.Query()
+	for _, qt := range queryParams["tag"] {
+		tag, err := paramToTag(qt)
+		if err != nil {
+			http.Error(w, "bad query param", http.StatusBadRequest)
+			return
+		}
+		tags = append(tags, *tag)
+	}
+	attrs, err := h.dicom.HeaderAttributes(key, tags)
+	if err != nil {
+		fmt.Println("error getting attrs: %s", err)
+		http.Error(w, "error getting attrs", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("success", tags, attrs)
 	w.WriteHeader(http.StatusOK)
+}
+
+func paramToTag(s string) (*processor.Tag, error) {
+	parts := strings.Split(s, ":")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("bad tag format")
+	}
+	// Convert hexadecimal group and element to numerical values
+	group, err := strconv.ParseUint(parts[0], 16, 16)
+	if err != nil {
+		return nil, fmt.Errorf("bad tag format: %w", err)
+	}
+	element, err := strconv.ParseUint(parts[1], 16, 16)
+	if err != nil {
+		return nil, fmt.Errorf("bad tag format: %w", err)
+	}
+	return &processor.Tag{uint16(group), uint16(element)}, nil
 }

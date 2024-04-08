@@ -24,7 +24,7 @@ go run cmd/main.go
 ## handlers
 
 contains:
-new(repository, processor)
+new(repository)
 uploadHandler(file))
 getTagsHandler(id, tags)
 getPngHandler(id)
