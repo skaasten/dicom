@@ -39,7 +39,7 @@ POST /dicom content-type:multipart/form-data
 => 201 url with resource id
 
 ## Get tags for a file
-GET /dicom/{id}?tags[]=%280008%2C0025%29
+GET /dicom/{id}?tags=tag=0010:1010&tag=0010:1020
 
 # Get png files 
 GET /dicom/{id} -H accept-type=image/png
