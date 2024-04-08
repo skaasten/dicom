@@ -17,10 +17,10 @@ The response will show the `ID` of the added file, with http status 201
 ## Get header attributes
 
 To get one or more header attributes, specify the tags as query params
-in the form `group:element`.
+in the form `group:element`. Multiple tags can be passed in. 
 
 ```bash
-curl -i -v "localhost:8080/dicom/8d25efb3-3331-49ed-ab23-b3f44edb6f01?tag=0010:1010"
+curl -i -v "localhost:8080/dicom/8d25efb3-3331-49ed-ab23-b3f44edb6f01?tag=0010:1010&tag=0010:1020"
 ```
 The response will show the specified tags and values.
 
@@ -39,7 +39,7 @@ POST /dicom content-type:multipart/form-data
 => 201 url with resource id
 
 ## Get tags for a file
-GET /dicom/{id}?tags=tag=0010:1010&tag=0010:1020
+GET /dicom/{id}?tag=0010:1010&tag=0010:1020
 
 # Get png files 
 GET /dicom/{id} -H accept-type=image/png
