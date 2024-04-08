@@ -26,7 +26,12 @@ func New(dicom *service.Dicom) *Handlers {
 
 // Define a struct to represent the JSON response
 type UploadResponse struct {
-	id string `json:"id"`
+	ID string `json:"id"`
+}
+
+type GetResponse struct {
+	ID    string                      `json:"id"`
+	Attrs []processor.HeaderAttribute `json:"attrs"`
 }
 
 func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,9 +57,8 @@ func (h *Handlers) AddHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := h.dicom.Add(buf.Bytes())
-	fmt.Println("key is ", key)
 	response := UploadResponse{
-		id: key.String(),
+		ID: key.String(),
 	}
 
 	// Marshal the response struct to JSON format
@@ -73,7 +77,6 @@ func (h *Handlers) GetByIdHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid URL", http.StatusBadRequest)
 		return
 	}
-	fmt.Fprintf(w, "UUID: %s\n", id)
 	key, err := uuid.Parse(id)
 	if err != nil {
 		http.Error(w, "not found", http.StatusNotFound)
@@ -101,8 +104,17 @@ func (h *Handlers) GetByIdHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("success", tags, attrs)
+	response := GetResponse{
+		ID:    key.String(),
+		Attrs: attrs,
+	}
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, "error encoding JSON: "+err.Error(), http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Write(responseJSON)
 }
 
 func paramToTag(s string) (*processor.Tag, error) {
