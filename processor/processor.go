@@ -2,6 +2,7 @@ package processor
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"image/png"
 
@@ -18,6 +19,16 @@ type Tag struct {
 type HeaderAttribute struct {
 	Tag   Tag    `json:"tag"`
 	Value string `json:"value"`
+}
+
+func (t Tag) MarshalJSON() ([]byte, error) {
+	// Convert the group and element fields to hexadecimal strings
+	groupHex := fmt.Sprintf("%04X", t.Group)
+	elementHex := fmt.Sprintf("%04X", t.Element)
+
+	jsonStr := groupHex + ":" + elementHex
+	// Marshal the map to JSON
+	return json.Marshal(jsonStr)
 }
 
 // HeaderAttrs Returns the specified header attributs for a given dicom
